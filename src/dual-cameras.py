@@ -1,7 +1,7 @@
 import cv2
 
-cam0 = cv2.VideoCapture(0)
-cam1 = cv2.VideoCapture(2)
+cam0 = cv2.VideoCapture(2)
+cam1 = cv2.VideoCapture(0)
 
 cv2.namedWindow("Zero Test")
 cv2.namedWindow("One Test")
@@ -23,10 +23,12 @@ while True:
         break
     elif k%256 == 32:
         # SPACE pressed
-        img_name = "opencv_frame_{}.png".format(img_counter)
-        cv2.imwrite(img_name, frame0)
-        cv2.imwrite(img_name, frame1)
-        print("{} written!".format(img_name))
+        img_name_0 = "opencv_frame_{}_0.png".format(img_counter)
+        img_name_1 = "opencv_frame_{}_1.png".format(img_counter)
+        cv2.imwrite(img_name_0, frame0)
+        cv2.imwrite(img_name_1, frame1)
+        print("{} written!".format(img_name_0))
+        print("{} written!".format(img_name_1))
         img_counter += 1
 
 cam0.release()
