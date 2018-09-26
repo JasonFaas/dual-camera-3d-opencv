@@ -9,8 +9,7 @@ def show_image(image_to_draw):
     cv.waitKey(0) & 0xFF
 
     datetime_now = str(datetime.datetime.now()).replace(' ', '_')
-    img_name = "../../resources/" + "opencv_frame_{}_{}.png".format(datetime_now, 'img')
-    print(img_name)
+    img_name = "../../resources/saved/" + "opencv_frame_{}_{}.png".format(datetime_now, 'img')
     cv.imwrite(img_name, image_to_draw)
 
 
@@ -44,24 +43,14 @@ objpoints.append(objp)
 corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
 imgpoints.append(corners)
 
-# Draw and display the corners
-cv.drawChessboardCorners(img, board_size, corners, ret)
-
-show_image(img)
 
 ret, mtx, dist, rvecs, tvecs = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
-print(mtx)
 
-img = img_orig.copy()
 h, w = img.shape[:2]
 newcameramtx, roi = cv.getOptimalNewCameraMatrix(mtx, dist, (w, h), 1, (w, h))
 
 # undistort
 dst = cv.undistort(img, mtx, dist, None, newcameramtx)
-
-# crop the image
-x, y, w, h = roi
-dst = dst[y:y + h, x:x + w]
 
 #3d Time
 criteria2 = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -74,39 +63,39 @@ ret2,rvecs2, tvecs2 = cv.solvePnP(objp2, corners2, mtx, dist)
 # project 3D points to image plane
 imgpts2, jac2 = cv.projectPoints(axis2, rvecs2, tvecs2, mtx, dist)
 
-print('f')
-print(corners2)
-print('g')
-print(imgpts2)
-def draw2(img, corners, imgpts):
-    corner = tuple(corners[0].ravel())
-    img = cv.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
-    img = cv.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
-    img = cv.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
-    return img
-img = draw2(img,corners2,imgpts2)
 
-show_image(img)
+# TODO: reenable drawing axis lines
+# def draw2(img, corners, imgpts):
+#     corner = tuple(corners[0].ravel())
+#     img = cv.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
+#     img = cv.line(img, corner, tuple(imgpts[1].ravel()), (0,255,0), 5)
+#     img = cv.line(img, corner, tuple(imgpts[2].ravel()), (0,0,255), 5)
+#     return img
+# img = draw2(img,corners2,imgpts2)
+#
+# show_image(img)
 
 
-
-axis3 = np.float32([[0,0,0], [0,3,0], [3,3,0], [3,0,0],
-                   [0,0,-3],[0,3,-3],[3,3,-3],[3,0,-3] ])
+edge_size = 2
+axis3 = np.float32([[0,0,0], [0, edge_size, 0], [edge_size, edge_size, 0], [edge_size, 0, 0],
+                    [0, 0, -edge_size], [0, edge_size, -edge_size], [edge_size, edge_size, -edge_size], [edge_size, 0, -edge_size]])
 ret2,rvecs2, tvecs2 = cv.solvePnP(objp2, corners2, mtx, dist)
 imgpts3, jac3 = cv.projectPoints(axis3, rvecs2, tvecs2, mtx, dist)
 
-def draw3(img, corners, imgpts):
+def draw3(img, imgpts):
     imgpts = np.int32(imgpts).reshape(-1,2)
     # draw ground floor in green
     img = cv.drawContours(img, [imgpts[:4]],-1,(0,255,0),-3)
     # draw pillars in blue color
-    for i,j in zip(range(4),range(4,8)):
-        img = cv.line(img, tuple(imgpts[i]), tuple(imgpts[j]),(255),3)
+    for i,j in zip(range(0,4),range(4,8)):
+        print(str(i) + ":" + str(j))
+        print(str(imgpts[i]) + ":" + str(imgpts[j]))
+        img = cv.line(img, tuple(imgpts[i]), tuple(imgpts[j]), (255, 0, 0), 3)
     # draw top layer in red color
-    img = cv.drawContours(img, [imgpts[4:]],-1,(0,0,255),3)
+    img = cv.drawContours(img, [imgpts[4:]], -1, (0, 0, 255), 3)
     return img
 
-img = draw3(img,corners2,imgpts3)
+img = draw3(img,imgpts3)
 show_image(img)
 
 cv.destroyAllWindows()
