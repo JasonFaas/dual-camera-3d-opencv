@@ -3,9 +3,10 @@ import cv2 as cv
 import glob
 import datetime
 
-def add_square_to_img(img_original):
+def add_square_to_img(img_original, three_d_square_size):
 
     board_size = (7, 7)
+    three_d_square_size = max(min(board_size[0]-1, three_d_square_size), 1)
 
     # termination criteria
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
@@ -65,10 +66,6 @@ def add_square_to_img(img_original):
     # project 3D points to image plane
     imgpts2, jac2 = cv.projectPoints(axis2, rvecs2, tvecs2, mtx, dist)
 
-    print('f')
-    print(corners2)
-    print('g')
-    print(imgpts2)
     def draw2(img, corners, imgpts):
         corner = tuple(corners[0].ravel())
         img = cv.line(img, corner, tuple(imgpts[0].ravel()), (255,0,0), 5)
@@ -79,21 +76,21 @@ def add_square_to_img(img_original):
 
 
 
-
-    axis3 = np.float32([[0,0,0], [0,3,0], [3,3,0], [3,0,0],
-                       [0,0,-3],[0,3,-3],[3,3,-3],[3,0,-3] ])
+    spaces_cnt = three_d_square_size
+    axis3 = np.float32([[0,0,0], [0,spaces_cnt,0], [spaces_cnt,spaces_cnt,0], [spaces_cnt,0,0],
+                       [0,0,-spaces_cnt],[0,spaces_cnt,-spaces_cnt],[spaces_cnt,spaces_cnt,-spaces_cnt],[spaces_cnt,0,-spaces_cnt] ])
     ret2,rvecs2, tvecs2 = cv.solvePnP(objp2, corners2, mtx, dist)
     imgpts3, jac3 = cv.projectPoints(axis3, rvecs2, tvecs2, mtx, dist)
 
     def draw3(img, corners, imgpts):
         imgpts = np.int32(imgpts).reshape(-1,2)
         # draw ground floor in green
-        img = cv.drawContours(img, [imgpts[:4]],-1,(0,255,0),-3)
+        img = cv.drawContours(img, [imgpts[:4]],-1,(0,255,0), thickness=-3)
         # draw pillars in blue color
         for i,j in zip(range(4),range(4,8)):
-            img = cv.line(img, tuple(imgpts[i]), tuple(imgpts[j]),(255),3)
+            img = cv.line(img, pt1=tuple(imgpts[i]), pt2=tuple(imgpts[j]), color=(255), thickness=3)
         # draw top layer in red color
-        img = cv.drawContours(img, [imgpts[4:]],-1,(0,0,255),3)
+        img = cv.drawContours(img, contours=[imgpts[4:]], contourIdx=-1, color=(0, 0, 255) ,thickness=3)
         return img
 
     img = draw3(img,corners2,imgpts3)
@@ -101,12 +98,14 @@ def add_square_to_img(img_original):
     return img
 
 
-camera = 0
+camera = 1
 cap = cv.VideoCapture(camera)
 camera_width = int(cap.get(cv.CAP_PROP_FRAME_WIDTH))
 camera_height = int(cap.get(cv.CAP_PROP_FRAME_HEIGHT))
 
 recording = False
+
+square_size = 3
 
 # out.write(frame)
 
@@ -117,7 +116,7 @@ while(True):
         # Our operations on the frame come here
         # gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-        frame = add_square_to_img(frame)
+        frame = add_square_to_img(frame, square_size)
 
         # Display the resulting frame
         key_press = cv.waitKey(1) & 0xFF
@@ -139,7 +138,8 @@ while(True):
         elif key_press == ord('t') and recording:
             recording = False
             out.release()
-
+        elif key_press >= ord('1') and key_press <= ord('9'):
+            square_size = key_press - ord('0')
         if recording:
             out.write(frame)
             font = cv.FONT_HERSHEY_SIMPLEX

@@ -1,6 +1,5 @@
 import numpy as np
 import cv2 as cv
-import glob
 
 board_size = (7, 7)
 
@@ -16,7 +15,7 @@ objpoints = [] # 3d point in real world space
 imgpoints = [] # 2d points in image plane.
 
 # Read image
-fname = 'old_picture_hold/1/opencv_frame_1_0.png'
+fname = '../../resources/old_picture_hold/1/opencv_frame_1_0.png'
 img = cv.imread(fname)
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
 
