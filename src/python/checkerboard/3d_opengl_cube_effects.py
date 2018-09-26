@@ -76,7 +76,7 @@ imgpts2, jac2 = cv.projectPoints(axis2, rvecs2, tvecs2, mtx, dist)
 # show_image(img)
 
 
-edge_size = 2
+edge_size = 3
 axis3 = np.float32([[0,0,0], [0, edge_size, 0], [edge_size, edge_size, 0], [edge_size, 0, 0],
                     [0, 0, -edge_size], [0, edge_size, -edge_size], [edge_size, edge_size, -edge_size], [edge_size, 0, -edge_size]])
 ret2,rvecs2, tvecs2 = cv.solvePnP(objp2, corners2, mtx, dist)
@@ -84,15 +84,30 @@ imgpts3, jac3 = cv.projectPoints(axis3, rvecs2, tvecs2, mtx, dist)
 
 def draw3(img, imgpts):
     imgpts = np.int32(imgpts).reshape(-1,2)
+
+    # draw back left wall
+    back_pts_2 = np.empty((0, 2), dtype=int)
+    back_pts_2 = np.append(back_pts_2, [imgpts[0]], axis=0)
+    back_pts_2 = np.append(back_pts_2, [imgpts[4]], axis=0)
+    back_pts_2 = np.append(back_pts_2, [imgpts[5]], axis=0)
+    back_pts_2 = np.append(back_pts_2, [imgpts[1]], axis=0)
+    img = cv.drawContours(img, [back_pts_2],-1,(100,100,255),10)
+
+    # draw back right wall
+    back_pts_2 = np.empty((0, 2), dtype=int)
+    back_pts_2 = np.append(back_pts_2, [imgpts[0]], axis=0)
+    back_pts_2 = np.append(back_pts_2, [imgpts[4]], axis=0)
+    back_pts_2 = np.append(back_pts_2, [imgpts[7]], axis=0)
+    back_pts_2 = np.append(back_pts_2, [imgpts[3]], axis=0)
+    img = cv.drawContours(img, [back_pts_2],-1,(255,100,100),-1)
     # draw ground floor in green
-    img = cv.drawContours(img, [imgpts[:4]],-1,(0,255,0),-3)
+    img = cv.drawContours(img, [imgpts[:4]],-1,(0,255,0),-1)
     # draw pillars in blue color
     for i,j in zip(range(0,4),range(4,8)):
-        print(str(i) + ":" + str(j))
-        print(str(imgpts[i]) + ":" + str(imgpts[j]))
         img = cv.line(img, tuple(imgpts[i]), tuple(imgpts[j]), (255, 0, 0), 3)
     # draw top layer in red color
-    img = cv.drawContours(img, [imgpts[4:]], -1, (0, 0, 255), 3)
+    img = cv.drawContours(img, [imgpts[4:]], -1, (0, 0, 255), -1)
+
     return img
 
 img = draw3(img,imgpts3)
