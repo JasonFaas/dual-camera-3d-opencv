@@ -76,11 +76,12 @@ imgpts2, jac2 = cv.projectPoints(axis2, rvecs2, tvecs2, mtx, dist)
 # show_image(img)
 
 
-edge_size = 2
-x_offset = 3
-y_offset = 2
-axis3 = np.float32([[x_offset, y_offset, 0],            [x_offset, y_offset + edge_size, 0],            [x_offset + edge_size, y_offset + edge_size, 0],            [x_offset + edge_size, y_offset, 0],
-                    [x_offset, y_offset, -edge_size],   [x_offset, y_offset + edge_size, -edge_size],   [x_offset + edge_size, y_offset + edge_size, -edge_size],   [x_offset + edge_size, y_offset, -edge_size]])
+edge_size = 1
+x_offset = 5
+y_offset = 5
+z_offset = -5
+axis3 = np.float32([[x_offset, y_offset, z_offset],            [x_offset, y_offset + edge_size, z_offset],            [x_offset + edge_size, y_offset + edge_size, z_offset],            [x_offset + edge_size, y_offset, z_offset],
+                    [x_offset, y_offset, z_offset-edge_size],   [x_offset, y_offset + edge_size, z_offset-edge_size],   [x_offset + edge_size, y_offset + edge_size, z_offset-edge_size],   [x_offset + edge_size, y_offset, z_offset-edge_size]])
 ret2,rvecs2, tvecs2 = cv.solvePnP(objp2, corners2, mtx, dist)
 imgpts3, jac3 = cv.projectPoints(axis3, rvecs2, tvecs2, mtx, dist)
 
