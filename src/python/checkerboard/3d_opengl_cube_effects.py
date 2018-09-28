@@ -97,7 +97,7 @@ result_img[0:dev_rows, 0:dev_cols] = develjpg.copy()
 
 
 # cols-1 and rows-1 are the coordinate limits.
-pts1 = np.float32([[0,0], [0,dev_rows], [dev_cols,0]])
+pts1 = np.float32([[0,0], [0,dev_rows-1], [dev_cols-1,0]])
 pts2 = np.float32([imgpts3[0],imgpts3[1],imgpts3[3]])
 M = cv.getAffineTransform(pts1, pts2)
 dst = cv.warpAffine(result_img, M, (img.shape[1], img.shape[0]))
@@ -117,6 +117,20 @@ img = cv.add(background_img, fg_img)
 cv.imshow('result', result_img)
 cv.imshow('dst', dst)
 cv.imshow('dst2', img)
+
+src_pts = np.array([
+        [0, 0],
+        [dev_cols - 1, 0],
+        [dev_cols - 1, dev_rows - 1],
+        [0, dev_rows - 1]], dtype="float32")
+dst_pts = np.array([imgpts3[0],imgpts3[3],imgpts3[2],imgpts3[1]])
+matrix = cv.getPerspectiveTransform(src_pts, dst_pts)
+result_more_img = cv.warpPerspective(result_img, matrix, (img.shape[1], img.shape[0]))
+cv.imshow('moremore', result_more_img)
+
+
+
+
 
 def draw3(img, imgpts):
     imgpts = np.int32(imgpts).reshape(-1,2)
