@@ -3,20 +3,22 @@ import numpy as np
 import cv2 as cv
 import datetime
 
+resources_path = '../../resources/'
+
 
 def show_image(image_to_draw):
     cv.imshow('img', image_to_draw)
     cv.waitKey(0) & 0xFF
 
     datetime_now = str(datetime.datetime.now()).replace(' ', '_')
-    img_name = "../../resources/saved/" + "opencv_frame_{}_{}.png".format(datetime_now, 'img')
+    img_name = resources_path + "saved/" + "opencv_frame_{}_{}.png".format(datetime_now, 'img')
     cv.imwrite(img_name, image_to_draw)
 
 
 board_size = (7, 7)
 
 # Read image
-fname = '../../resources/old_picture_hold/1/opencv_frame_1_0.png'
+fname = '%sold_picture_hold/1/opencv_frame_1_0.png' % resources_path
 img_orig = cv.imread(fname)
 img = img_orig.copy()
 gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
@@ -76,14 +78,45 @@ imgpts2, jac2 = cv.projectPoints(axis2, rvecs2, tvecs2, mtx, dist)
 # show_image(img)
 
 
-edge_size = 1
-x_offset = 5
-y_offset = 5
-z_offset = -5
+edge_size = 3
+x_offset = 0
+y_offset = 0
+z_offset = -0
 axis3 = np.float32([[x_offset, y_offset, z_offset],            [x_offset, y_offset + edge_size, z_offset],            [x_offset + edge_size, y_offset + edge_size, z_offset],            [x_offset + edge_size, y_offset, z_offset],
                     [x_offset, y_offset, z_offset-edge_size],   [x_offset, y_offset + edge_size, z_offset-edge_size],   [x_offset + edge_size, y_offset + edge_size, z_offset-edge_size],   [x_offset + edge_size, y_offset, z_offset-edge_size]])
 ret2,rvecs2, tvecs2 = cv.solvePnP(objp2, corners2, mtx, dist)
 imgpts3, jac3 = cv.projectPoints(axis3, rvecs2, tvecs2, mtx, dist)
+
+
+# TODO: Delete this hold cv.drawContours(img, [imgpts[:4]],-1,(0,255,0),-1)
+develjpg = cv.imread(resources_path + "to_project/devel_square.jpg")
+result_img = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+
+dev_rows,dev_cols, _ = develjpg.shape
+result_img[0:dev_rows, 0:dev_cols] = develjpg.copy()
+
+
+# cols-1 and rows-1 are the coordinate limits.
+pts1 = np.float32([[0,0], [0,dev_rows], [dev_cols,0]])
+pts2 = np.float32([imgpts3[0],imgpts3[1],imgpts3[3]])
+M = cv.getAffineTransform(pts1, pts2)
+dst = cv.warpAffine(result_img, M, (img.shape[1], img.shape[0]))
+
+dst2gray = cv.cvtColor(dst, cv.COLOR_BGR2GRAY)
+ret, mask = cv.threshold(dst2gray, 1, 255, cv.THRESH_BINARY)
+cv.imshow('mask', mask)
+kernel = np.ones((5,5),np.uint8)
+closing = cv.morphologyEx(mask, cv.MORPH_CLOSE, kernel, iterations=3)
+closing_inv = cv.bitwise_not(closing)
+cv.imshow('mask2', closing)
+
+background_img = cv.bitwise_and(img, img, mask=closing_inv)
+fg_img = cv.bitwise_and(dst, dst, mask=closing)
+img = cv.add(background_img, fg_img)
+
+cv.imshow('result', result_img)
+cv.imshow('dst', dst)
+cv.imshow('dst2', img)
 
 def draw3(img, imgpts):
     imgpts = np.int32(imgpts).reshape(-1,2)
@@ -103,13 +136,13 @@ def draw3(img, imgpts):
     back_pts_2 = np.append(back_pts_2, [imgpts[7]], axis=0)
     back_pts_2 = np.append(back_pts_2, [imgpts[3]], axis=0)
     img = cv.drawContours(img, [back_pts_2],-1,(255,100,100),-1)
-    # draw ground floor in green
-    img = cv.drawContours(img, [imgpts[:4]],-1,(0,255,0),-1)
+    # TODO Remove this and next line: draw ground floor in green
+    # img = cv.drawContours(img, [imgpts[:4]],-1,(0,255,0),-1)
     # draw pillars in blue color
     for i,j in zip(range(0,4),range(4,8)):
         img = cv.line(img, tuple(imgpts[i]), tuple(imgpts[j]), (255, 0, 0), 3)
     # draw top layer in red color
-    img = cv.drawContours(img, [imgpts[4:]], -1, (0, 0, 255), -1)
+    img = cv.drawContours(img, [imgpts[4:]], -1, (0, 0, 255), 3)
 
     return img
 
