@@ -14,21 +14,7 @@ class ArInput:
         self.cube_size = (self.cube_size % 6) + 1
         return cube_return
 
-    def look_for_cube_size_v2(self, img, gray, corners):
-        # termination criteria
-        criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-        # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
-        objp = np.zeros((self.board_width * self.board_width, 3), np.float32)
-        objp[:, :2] = np.mgrid[0:self.board_width, 0:self.board_width].T.reshape(-1, 2)
-        # Arrays to store object points and image points from all the images.
-        objpoints = []  # 3d point in real world space
-        imgpoints = []  # 2d points in image plane.
-        objpoints.append(objp)
-        corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
-        imgpoints.append(corners)
-        # Draw and display the corners
-        # cv.drawChessboardCorners(img, (board_width, board_width), corners2, ret)
-        # cv.imshow('img', img)
+    def look_for_cube_size_v2(self, img, corners2):
 
         # TODO put this into a verification
         smallest_x = np.min(corners2[:, 0, 0])

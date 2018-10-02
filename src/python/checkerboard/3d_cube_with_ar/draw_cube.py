@@ -4,19 +4,17 @@ import numpy as np
 
 class DrawCube:
 
-    def draw_cube_pieces(self, corners, gray, img, board_size, cube_size):
-        # termination criteria
-        criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    def draw_cube_pieces(self, corners, corners2, img, board_size, cube_size):
         # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
+        # Arrays to store object points and image points from all the images.
         objp = np.zeros((board_size[1] * board_size[0], 3), np.float32)
         objp[:, :2] = np.mgrid[0:board_size[0], 0:board_size[1]].T.reshape(-1, 2)
-        # Arrays to store object points and image points from all the images.
         objpoints = []  # 3d point in real world space
         imgpoints = []  # 2d points in image plane.
         objpoints.append(objp)
-        corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
         imgpoints.append(corners)
-        _, mtx, dist, _, _ = cv.calibrateCamera(objpoints, imgpoints, gray.shape[::-1], None, None)
+
+        _, mtx, dist, _, _ = cv.calibrateCamera(objpoints, imgpoints, (img.shape[1],img.shape[0]), None, None)
         # 3d Time
         objp2 = np.zeros((board_size[1] * board_size[0], 3), np.float32)
         objp2[:, :2] = np.mgrid[0:board_size[0], 0:board_size[1]].T.reshape(-1, 2)
