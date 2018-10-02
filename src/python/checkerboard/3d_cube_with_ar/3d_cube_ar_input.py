@@ -35,9 +35,10 @@ def analyze_image_and_add_ar(frame_to_analyze):
     ret, corners = cv.findChessboardCorners(gray, board_size, None)
     # fail program if points not found
     if not ret:
-        print('fail at ret')
+        frame_wait_cnt = 10
+        print('no checkerboard detected, wait %s frames' % str(frame_wait_cnt))
         cv.imshow('img', img)
-        return 10
+        return frame_wait_cnt
 
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)

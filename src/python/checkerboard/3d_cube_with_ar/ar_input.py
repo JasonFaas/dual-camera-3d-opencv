@@ -65,7 +65,7 @@ class ArInput:
             _, masked_val_img_bin = cv.threshold(masked_val_img, 100, 255, cv.THRESH_BINARY)
             masked_sat_img = cv.bitwise_and(sat, mask)
             masked_sat_img = cv.bitwise_and(sat, masked_val_img_bin)
-            cv.imshow('just_focus_' + str(square), masked_sat_img)
+            # cv.imshow('just_focus_' + str(square), masked_sat_img)
             image__sum = (masked_sat_img > 60).sum()
             image_sums[square] = (square, image__sum)
             # print(str(square) + "_" + str(image__sum))
