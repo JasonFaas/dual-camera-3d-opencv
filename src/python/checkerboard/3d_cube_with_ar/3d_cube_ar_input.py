@@ -19,11 +19,12 @@ folder_path = 'checkboard_cube_with_ar_input/'
 # 5 should work and agree with 4
 pictures = ['opencv_frame_0_0.png', 'opencv_frame_0_1.png', 'opencv_frame_7_0.png', 'opencv_frame_7_1.png', 'opencv_frame_5_0.png', 'opencv_frame_5_1.png']
 
-board_size = (7, 7)
+board_width = 7
+board_size = (board_width, board_width)
 
 draw_cube = DrawCube()
 
-ar_input = ArInput()
+ar_input = ArInput(board_width)
 
 
 def show_image(image_to_draw):
@@ -49,7 +50,7 @@ def analyze_image_and_add_ar(frame_to_analyze):
         show_image(img)
         return
 
-    cube_size = ar_input.look_for_cube_size(img, corners)
+    cube_size = ar_input.look_for_cube_size_v2(img, gray, corners)
 
     img = draw_cube.draw_cube_pieces(corners, gray, img, board_size, cube_size=cube_size)
 
