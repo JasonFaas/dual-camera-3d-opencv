@@ -44,6 +44,9 @@ def analyze_image_and_add_ar(frame_to_analyze):
 
     cube_size = ar_input.look_for_cube_size_v2(img, corners2)
 
+    # TODO put ar button on screen
+    # ar_input.
+
     img = draw_cube.draw_cube_pieces(corners, corners2, img, board_size, cube_size=cube_size)
 
     cv.imshow('img', img)
@@ -55,7 +58,7 @@ for picture in pictures:
     fname = '%s%s%s' % (resources_path, folder_path, picture)
     img_orig = cv.imread(fname)
     analyze_image_and_add_ar(img_orig)
-    if cv.waitKey(2000) & 0xFF == ord('q'):
+    if cv.waitKey(1000) & 0xFF == ord('q'):
         print("exit requested")
         cv.destroyAllWindows()
         exit(0)

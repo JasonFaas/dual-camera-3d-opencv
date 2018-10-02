@@ -31,25 +31,30 @@ class DrawCube:
                             [x_offset + edge_size, y_offset, z_offset - edge_size]])
         _, rvecs2, tvecs2 = cv.solvePnP(objp2, corners2, mtx, dist)
         imgpts3, jac3 = cv.projectPoints(axis3, rvecs2, tvecs2, mtx, dist)
-        # Read image to project and put it on image with same size as image to project to
-        resources_path = '../../resources/'
-        develjpg = cv.imread(resources_path + "to_project/devel_square.jpg")
-        devel_jpg_full_size = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-        dev_rows, dev_cols, _ = develjpg.shape
-        devel_jpg_full_size[0:dev_rows, 0:dev_cols] = develjpg.copy()
-        img = self.add_image_to_base(img, devel_jpg_full_size,
-                                          np.array([imgpts3[0], imgpts3[3], imgpts3[2], imgpts3[1]]), dev_rows,
-                                          dev_cols)
+
+        img = self.add_image_to_base(img,
+                                     np.array([imgpts3[0], imgpts3[3], imgpts3[2], imgpts3[1]]))
         img = self.draw_cube(img, imgpts3)
         return img
 
-    def add_image_to_base(self, img, img_to_use, dst_pts, dev_rows, dev_cols):
+    def add_image_to_base(self, img, dst_pts):
+
+
+        # Read image to project and put it on image with same size as image to project to
+        resources_path = '../../resources/'
+        develjpg = cv.imread(resources_path + "to_project/devel_square.jpg")
+        dev_rows, dev_cols, _ = develjpg.shape
         # Create matrix to transform then warp
         src_pts = np.array([
             [0, 0],
             [dev_cols - 1, 0],
             [dev_cols - 1, dev_rows - 1],
             [0, dev_rows - 1]], dtype="float32")
+
+
+        img_to_use = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+        img_to_use[0:dev_rows, 0:dev_cols] = develjpg.copy()
+
 
         matrix = cv.getPerspectiveTransform(src_pts, dst_pts)
         warped_img = cv.warpPerspective(img_to_use, matrix, (img.shape[1], img.shape[0]))
