@@ -32,8 +32,7 @@ class DrawCube:
         _, rvecs2, tvecs2 = cv.solvePnP(objp2, corners2, mtx, dist)
         imgpts3, jac3 = cv.projectPoints(axis3, rvecs2, tvecs2, mtx, dist)
 
-        img = self.add_image_to_base(img,
-                                     np.array([imgpts3[0], imgpts3[3], imgpts3[2], imgpts3[1]]))
+        img = self.add_image_to_base(img, np.array([imgpts3[0], imgpts3[3], imgpts3[2], imgpts3[1]]))
         img = self.draw_cube(img, imgpts3)
         return img
 
@@ -42,18 +41,21 @@ class DrawCube:
 
         # Read image to project and put it on image with same size as image to project to
         resources_path = '../../resources/'
-        develjpg = cv.imread(resources_path + "to_project/devel_square.jpg")
-        dev_rows, dev_cols, _ = develjpg.shape
+        project_img = cv.imread(resources_path + "to_project/devel_square.jpg")
+        dev_rows, dev_cols, _ = project_img.shape
+        real_src_points = [[0,0],[dev_cols-1,dev_rows-1]]
+
+        # Put image passed in onto black image
+        img_to_use = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
+        img_to_use[real_src_points[0][0]:real_src_points[1][1], real_src_points[0][1]:real_src_points[1][0]] = \
+            project_img[real_src_points[0][0]:real_src_points[1][1], real_src_points[0][1]:real_src_points[1][0]]
+
         # Create matrix to transform then warp
         src_pts = np.array([
-            [0, 0],
-            [dev_cols - 1, 0],
-            [dev_cols - 1, dev_rows - 1],
-            [0, dev_rows - 1]], dtype="float32")
-
-
-        img_to_use = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
-        img_to_use[0:dev_rows, 0:dev_cols] = develjpg.copy()
+            real_src_points[0],
+            [real_src_points[1][0], real_src_points[0][1]],
+            real_src_points[1],
+            [real_src_points[0][1], real_src_points[1][1]]], dtype="float32")
 
 
         matrix = cv.getPerspectiveTransform(src_pts, dst_pts)
