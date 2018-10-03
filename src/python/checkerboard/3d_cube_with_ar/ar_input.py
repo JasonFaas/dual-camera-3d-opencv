@@ -11,8 +11,18 @@ class ArInput:
         self.cube_size = 1
         self.resource_path = resource_path
         self.font = cv.imread("3d_cube_with_ar/font/white_rabbit_numbers.jpg")
-        self.font_one_points = [[15, 155], [80, 80]]
-        self.font_two_points = [[18, 155+80+50], [80, 80]]
+        font_one_points = [[16, 155], [80, 80]]
+        font_two_points = [[20, 155+80+50], [80, 80]]
+        font_three_points = [[20, 155+(80+50) * 2], [80, 80]]
+        font_four_points = [[22, 155+(80+50) * 3 - 5], [80, 80]]
+        font_five_points = [[22, 155+(80+50) * 4 - 10], [80, 80]]
+        font_six_points = [[18, 155+(80+50) * 5 - 5], [80, 80]]
+        self.font_point = np.array([font_one_points,
+                                   font_two_points,
+                                   font_three_points,
+                                   font_four_points,
+                                   font_five_points,
+                                   font_six_points])
         self.draw_cube = DrawCube()
 
     def look_for_cube_size_v1(self, img, corners):
@@ -80,14 +90,9 @@ class ArInput:
 
             # TODO draw ar button on checkerboard
             # place button on square
-            if square == 0:
-                roi_corners = np.array([[third], [second], [first], [fourth]], dtype=np.int32)
-                roi_corners_float = roi_corners.astype(np.float32)
-                img = self.draw_cube.add_image_to_base(img, self.font, roi_corners_float, self.font_one_points[0], self.font_one_points[1][0], self.font_one_points[1][1])
-            if square == 1:
-                roi_corners = np.array([[third], [second], [first], [fourth]], dtype=np.int32)
-                roi_corners_float = roi_corners.astype(np.float32)
-                img = self.draw_cube.add_image_to_base(img, self.font, roi_corners_float, self.font_two_points[0], self.font_two_points[1][0], self.font_two_points[1][1])
+            roi_corners = np.array([[third], [second], [first], [fourth]], dtype=np.int32)
+            roi_corners_float = roi_corners.astype(np.float32)
+            img = self.draw_cube.add_image_to_base(img, self.font, roi_corners_float, self.font_point[square][0], self.font_point[square][1][0], self.font_point[square][1][1])
 
         image_sums = sorted(image_sums, key=itemgetter(1))
         is_finger_detected = image_sums[-1][1] > image_sums[-2][1] * 2
