@@ -17,7 +17,7 @@ class ArInput:
         font_three_points = [[20, 155+(80+50) * 2], [80, 80]]
         font_four_points = [[22, 155+(80+50) * 3 - 5], [80, 80]]
         font_five_points = [[22, 155+(80+50) * 4 - 10], [80, 80]]
-        font_six_points = [[18, 155+(80+50) * 5 - 5], [80, 80]]
+        font_six_points = [[16, 20], [80, 80]]
         self.font_point = np.array([font_one_points,
                                    font_two_points,
                                    font_three_points,
@@ -56,14 +56,17 @@ class ArInput:
         greatest_sum = 0
         greatest_sum_roi_corners = -1
         for square in range(6):
-            first_bad_format = corners2[0 + self.board_width * square, 0]
-            second_bad_format = corners2[1 + self.board_width * square, 0]
-            fourth_bad_format = corners2[self.board_width + self.board_width * square, 0]
-            third_bad_format = corners2[self.board_width + 1 + self.board_width * square, 0]
+            # acquire points from corners to use for ar buttons
+            first_bad_format = corners2[self.board_width * square, 0]
+            second_bad_format = corners2[self.board_width * square + 1, 0]
+            third_bad_format = corners2[self.board_width * (square + 1) + 1, 0]
+            fourth_bad_format = corners2[self.board_width * (square + 1), 0]
             first = (first_bad_format[0], first_bad_format[1])
-            second = (int(first[0] * 2 - second_bad_format[0]), int(first[1] * 2 - second_bad_format[1]))
             fourth = (fourth_bad_format[0], fourth_bad_format[1])
+            second = (int(first[0] * 2 - second_bad_format[0]), int(first[1] * 2 - second_bad_format[1]))
             third = (int(fourth[0] * 2 - third_bad_format[0]), int(fourth[1] * 2 - third_bad_format[1]))
+
+            # put points into arrays for use below
             roi_corners_for_mask = np.array([[first, second, third, fourth]], dtype=np.int32)
             roi_corners = np.array([[third], [second], [first], [fourth]], dtype=np.int32)
 
@@ -114,12 +117,14 @@ class ArInput:
         square_with_greatest_detection = image_sums[-1][0]
         print(str(is_finger_detected) + " " + str(square_with_greatest_detection) + " " + str(image_sums[-1][1]))
         if is_finger_detected:
-            # highlight_finger(image_sums[-1][0])
-            self.cube_size = square_with_greatest_detection + 1
+            # only update cube_size if not '6th' location, that is for rotation
+            button_pressed = square_with_greatest_detection + 1
+            if button_pressed != 6:
+                self.cube_size = button_pressed
             img = self.place_button_on_checkerboard(img, self.font_inv, self.font_point[square_with_greatest_detection], greatest_sum_roi_corners, mask=greatest_masked_val_sat_bin)
-            return self.cube_size, img
+            return self.cube_size, img, button_pressed == 6
         else:
-            return self.cube_size, img
+            return self.cube_size, img, False
 
     def sort_points_for_extremes(self, corners2):
         if corners2.shape[1] == 1:

@@ -44,7 +44,8 @@ def analyze_image_and_add_ar(frame_to_analyze):
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
 
-    cube_size, img = ar_input.look_for_cube_size_v2(img, corners2)
+    # TODO: if rotate is true, rotate board on next frame
+    cube_size, img, rotate = ar_input.look_for_cube_size_v2(img, corners2)
 
     img = draw_cube.draw_cube_pieces(corners, corners2, img, board_size, cube_size=cube_size)
 
@@ -57,7 +58,7 @@ for picture in pictures:
     fname = '%s%s%s' % (resources_path, folder_path, picture)
     img_orig = cv.imread(fname)
     analyze_image_and_add_ar(img_orig)
-    if cv.waitKey(1000) & 0xFF == ord('q'):
+    if cv.waitKey(0) & 0xFF == ord('q'):
         print("exit requested")
         cv.destroyAllWindows()
         exit(0)
