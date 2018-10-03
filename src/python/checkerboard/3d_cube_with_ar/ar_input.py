@@ -25,7 +25,6 @@ class ArInput:
                                    font_five_points,
                                    font_six_points])
         self.draw_cube = DrawCube()
-        self.kernel_5 = np.ones((5, 5), np.uint8)
 
     def look_for_cube_size_v1(self, img, corners):
         cube_return = self.cube_size
@@ -77,8 +76,8 @@ class ArInput:
 
             # smooth image
             x_min, y_min, x_max, y_max = self.sort_points_for_extremes(roi_corners_for_mask)
-            sat[x_min:x_max,y_min:y_max] = cv.medianBlur(sat[x_min:x_max,y_min:y_max], 9)
-            val[x_min:x_max,y_min:y_max] = cv.medianBlur(val[x_min:x_max,y_min:y_max], 9)
+            sat[y_min:y_max, x_min:x_max] = cv.medianBlur(sat[y_min:y_max, x_min:x_max], 9)
+            val[y_min:y_max, x_min:x_max] = cv.medianBlur(val[y_min:y_max, x_min:x_max], 9)
 
             # TODO use ROI here for optimization
             # black out all area outside roi_corners
@@ -87,17 +86,13 @@ class ArInput:
 
             # TODO use ROI here for optimization
             # threshold for high val and high sat
-            _, masked_val_img_bin = cv.threshold(masked_val_img, 40, 255, cv.THRESH_BINARY)
+            _, masked_val_img_bin = cv.threshold(masked_val_img, 70, 255, cv.THRESH_BINARY)
             _, masked_sat_img_bin = cv.threshold(masked_sat_img, 40, 255, cv.THRESH_BINARY)
 
-            # TODO use ROI here for optimization
             # combine high val and high sat
-            masked_val_sat_bin = cv.bitwise_and(masked_val_img_bin, masked_sat_img_bin)
+            masked_val_sat_bin = np.zeros(sat.shape, dtype=np.uint8)
+            masked_val_sat_bin[y_min:y_max, x_min:x_max] = cv.bitwise_and(masked_val_img_bin[y_min:y_max, x_min:x_max], masked_sat_img_bin[y_min:y_max, x_min:x_max])
 
-            # TODO consider erode instead of MORPH_OPEN
-            # MORPH_CLOSE and MORPH_OPEN to take out outliers
-            masked_val_sat_bin[x_min:x_max,y_min:y_max] = cv.morphologyEx(masked_val_sat_bin[x_min:x_max,y_min:y_max], cv.MORPH_OPEN, self.kernel_5)
-            masked_val_sat_bin[x_min:x_max,y_min:y_max] = cv.morphologyEx(masked_val_sat_bin[x_min:x_max,y_min:y_max], cv.MORPH_CLOSE, self.kernel_5)
 
             # count high val and high sat pixels
             image__sum = (masked_val_sat_bin > 60).sum()
