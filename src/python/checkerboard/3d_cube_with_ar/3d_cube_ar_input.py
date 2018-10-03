@@ -20,12 +20,13 @@ folder_path = 'checkboard_cube_with_ar_input/'
 pictures = ['opencv_frame_0_0.png', 'opencv_frame_0_1.png', 'opencv_frame_7_0.png', 'opencv_frame_7_1.png', 'opencv_frame_5_0.png', 'opencv_frame_5_1.png']
 video = 'opencv_video_2018-10-02_11:15:45.129696_0.mkv'
 
+
 board_width = 7
 board_size = (board_width, board_width)
 
 draw_cube = DrawCube()
 
-ar_input = ArInput(board_width)
+ar_input = ArInput(board_width, resources_path)
 
 
 def analyze_image_and_add_ar(frame_to_analyze):

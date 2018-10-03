@@ -1,13 +1,19 @@
 import cv2 as cv
 import numpy as np
 from operator import itemgetter
+from draw_cube import DrawCube
 
 
 class ArInput:
 
-    def __init__(self, board_width):
+    def __init__(self, board_width, resource_path):
         self.board_width = board_width
         self.cube_size = 1
+        self.resource_path = resource_path
+        font = cv.imread("3d_cube_with_ar/font/white_rabbit_numbers.jpg")
+        font = font[15:15+80,155:155+80]
+        self.font_one = font
+        self.draw_cube = DrawCube()
 
     def look_for_cube_size_v1(self, img, corners):
         cube_return = self.cube_size
@@ -36,8 +42,7 @@ class ArInput:
         # print(top_most_point.reshape(2,-1).shape)
         # cv.line(img, top_most_point.reshape(2,-1), right_most_point.reshape(2,-1), (255, 0, 0), thickness=5)
 
-        img_squares = img.copy()
-        hue, sat, val = cv.split(cv.cvtColor(img_squares, cv.COLOR_BGR2HSV))
+        hue, sat, val = cv.split(cv.cvtColor(img, cv.COLOR_BGR2HSV))
         image_sums = np.zeros((6, 2), dtype=np.int32)
         for square in range(6):
             first_bad_format = corners2[0 + self.board_width * square, 0]
@@ -50,12 +55,15 @@ class ArInput:
             third = (int(fourth[0] * 2 - third_bad_format[0]), int(fourth[1] * 2 - third_bad_format[1]))
             roi_corners = np.array([[first, second, third, fourth]], dtype=np.int32)
 
+
+
             # draw lines
             # cv.line(img, first, second, (255, 0, 0), thickness=5)
             # cv.line(img, second, third, (255, 255, 0), thickness=5)
             # cv.line(img, third, fourth, (255, 0, 255), thickness=5)
             # cv.line(img, fourth, first, (0, 0, 0), thickness=5)
 
+            # TODO: review this, it may not be working like I think (though it is working)
             mask = np.zeros(sat.shape, dtype=np.uint8)
             # channel_count = sat.shape[2]
             channel_count = 1
@@ -69,6 +77,11 @@ class ArInput:
             image__sum = (masked_sat_img > 60).sum()
             image_sums[square] = (square, image__sum)
             # print(str(square) + "_" + str(image__sum))
+
+            # TODO draw ar button on checkerboard
+            # place button on square
+            # if square == 0:
+            #     draw_cube.
 
         image_sums = sorted(image_sums, key=itemgetter(1))
         is_finger_detected = image_sums[-1][1] > image_sums[-2][1] * 2
