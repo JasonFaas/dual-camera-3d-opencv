@@ -7,6 +7,7 @@ import cv2 as cv
 import datetime
 from draw_cube import DrawCube
 from ar_input import ArInput
+from board_rotation import BoardRotation
 
 resources_path = '../../resources/'
 folder_path = 'checkboard_cube_with_ar_input/'
@@ -25,8 +26,8 @@ board_width = 7
 board_size = (board_width, board_width)
 
 draw_cube = DrawCube()
-
 ar_input = ArInput(board_width, resources_path)
+board_rotation = BoardRotation(0)
 
 
 def analyze_image_and_add_ar(frame_to_analyze):
@@ -44,8 +45,11 @@ def analyze_image_and_add_ar(frame_to_analyze):
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
 
-    # TODO: if rotate is true, rotate board on next frame
+    corners2 = board_rotation.get_rotated_corners(corners2)
+
     cube_size, img, rotate = ar_input.look_for_cube_size_v2(img, corners2)
+    if rotate:
+        board_rotation.update_rotation()
 
     img = draw_cube.draw_cube_pieces(corners, corners2, img, board_size, cube_size=cube_size)
 
