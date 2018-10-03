@@ -25,6 +25,7 @@ class ArInput:
                                    font_five_points,
                                    font_six_points])
         self.draw_cube = DrawCube()
+        self.kernel_5 = np.ones((5, 5), np.uint8)
 
     def look_for_cube_size_v1(self, img, corners):
         cube_return = self.cube_size
@@ -93,6 +94,11 @@ class ArInput:
             # combine high val and high sat
             masked_val_sat_bin = cv.bitwise_and(masked_val_img_bin, masked_sat_img_bin)
 
+            # TODO consider erode instead of MORPH_OPEN
+            # MORPH_CLOSE and MORPH_OPEN to take out outliers
+            masked_val_sat_bin[x_min:x_max,y_min:y_max] = cv.morphologyEx(masked_val_sat_bin[x_min:x_max,y_min:y_max], cv.MORPH_OPEN, self.kernel_5)
+            masked_val_sat_bin[x_min:x_max,y_min:y_max] = cv.morphologyEx(masked_val_sat_bin[x_min:x_max,y_min:y_max], cv.MORPH_CLOSE, self.kernel_5)
+
             # count high val and high sat pixels
             image__sum = (masked_val_sat_bin > 60).sum()
             image_sums[square] = (square, image__sum)
@@ -102,8 +108,19 @@ class ArInput:
                 greatest_sum = image_sums[square][1]
                 greatest_sum_roi_corners = roi_corners
 
+
+            # TODO place finger back on square
+            # mask_inv = cv.bitwise_not(mask)
+            # opposite_mask = cv.bitwise_or(masked_val_sat_bin, mask_inv)
+            opposite_mask = cv.bitwise_not(masked_val_sat_bin)
+
             # place button on square
-            img = self.place_button_on_checkerboard(img, self.font, self.font_point[square], roi_corners)
+            img = self.place_button_on_checkerboard(img, self.font, self.font_point[square], roi_corners, opposite_mask)
+
+
+            if square == 1:
+                cv.imshow('masked_val_sat_bin', masked_val_sat_bin)
+                cv.imshow('opposite_mask', opposite_mask)
 
         # sort sums
         image_sums = sorted(image_sums, key=itemgetter(1))
@@ -114,7 +131,8 @@ class ArInput:
         if is_finger_detected:
             # highlight_finger(image_sums[-1][0])
             self.cube_size = square_with_greatest_detection + 1
-            img = self.place_button_on_checkerboard(img, self.font_inv, self.font_point[square_with_greatest_detection], greatest_sum_roi_corners)
+            # TODO fix None here
+            img = self.place_button_on_checkerboard(img, self.font_inv, self.font_point[square_with_greatest_detection], greatest_sum_roi_corners, opposite_mask=None)
             return self.cube_size, img
         else:
             return self.cube_size, img
@@ -132,12 +150,13 @@ class ArInput:
             y_max = np.max(corners2[0, :, 1])
         return x_min, y_min, x_max, y_max
 
-    def place_button_on_checkerboard(self, img, font_img, font_point_square, roi_corners):
+    def place_button_on_checkerboard(self, img, font_img, font_point_square, roi_corners, opposite_mask):
         roi_corners_float = roi_corners.astype(np.float32)
         img = self.draw_cube.add_image_to_base(img,
                                                font_img,
                                                roi_corners_float,
                                                font_point_square[0],
                                                font_point_square[1][0],
-                                               font_point_square[1][1])
+                                               font_point_square[1][1],
+                                               opposite_mask=opposite_mask)
         return img

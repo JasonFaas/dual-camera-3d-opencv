@@ -48,7 +48,7 @@ class DrawCube:
         img = self.draw_cube(img, imgpts3)
         return img
 
-    def add_image_to_base(self, img, project_img, dst_pts, src_start_point, src_width, src_height):
+    def add_image_to_base(self, img, project_img, dst_pts, src_start_point, src_width, src_height, opposite_mask=None):
         # Put image passed in onto black image
         img_to_use = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
         mask_to_use = np.zeros((img.shape[0], img.shape[1], 1), dtype=np.uint8)
@@ -74,7 +74,7 @@ class DrawCube:
         cv.fillConvexPoly(mask_to_use, dst_pts_int, 255)
         mask_to_use_inv = cv.bitwise_not(mask_to_use)
         img = cv.bitwise_and(img, img, mask=mask_to_use_inv)
-        img = cv.add(img, warped_img)
+        img = cv.add(img, warped_img, mask=opposite_mask)
 
         return img
 
