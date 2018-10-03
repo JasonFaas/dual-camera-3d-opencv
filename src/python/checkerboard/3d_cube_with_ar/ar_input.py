@@ -11,6 +11,7 @@ class ArInput:
         self.cube_size = 1
         self.resource_path = resource_path
         self.font = cv.imread("3d_cube_with_ar/font/white_rabbit_numbers.jpg")
+        self.font_inv = cv.bitwise_not(self.font)
         font_one_points = [[16, 155], [80, 80]]
         font_two_points = [[20, 155+80+50], [80, 80]]
         font_three_points = [[20, 155+(80+50) * 2], [80, 80]]
@@ -33,10 +34,7 @@ class ArInput:
     def look_for_cube_size_v2(self, img, corners2):
 
         # TODO put this into a verification
-        smallest_x = np.min(corners2[:, 0, 0])
-        smallest_y = np.min(corners2[:, 0, 1])
-        largest_x = np.max(corners2[:, 0, 0])
-        largest_y = np.max(corners2[:, 0, 1])
+        x_min, y_min, x_max, y_max = self.sort_points_for_extremes(corners2)
         # print(smallest_x)
         left_most_point = corners2[self.board_width ** 2 - self.board_width, 0]
         # print(left_most_point)
@@ -54,6 +52,9 @@ class ArInput:
 
         hue, sat, val = cv.split(cv.cvtColor(img, cv.COLOR_BGR2HSV))
         image_sums = np.zeros((6, 2), dtype=np.int32)
+
+        greatest_sum = 0
+        greatest_sum_roi_corners = -1
         for square in range(6):
             first_bad_format = corners2[0 + self.board_width * square, 0]
             second_bad_format = corners2[1 + self.board_width * square, 0]
@@ -63,43 +64,80 @@ class ArInput:
             second = (int(first[0] * 2 - second_bad_format[0]), int(first[1] * 2 - second_bad_format[1]))
             fourth = (fourth_bad_format[0], fourth_bad_format[1])
             third = (int(fourth[0] * 2 - third_bad_format[0]), int(fourth[1] * 2 - third_bad_format[1]))
-            roi_corners = np.array([[first, second, third, fourth]], dtype=np.int32)
+            roi_corners_for_mask = np.array([[first, second, third, fourth]], dtype=np.int32)
+            roi_corners = np.array([[third], [second], [first], [fourth]], dtype=np.int32)
 
-
-
-            # draw lines
-            # cv.line(img, first, second, (255, 0, 0), thickness=5)
-            # cv.line(img, second, third, (255, 255, 0), thickness=5)
-            # cv.line(img, third, fourth, (255, 0, 255), thickness=5)
-            # cv.line(img, fourth, first, (0, 0, 0), thickness=5)
-
-            # TODO: review this, it may not be working like I think (though it is working)
+            # create mask with polygon
             mask = np.zeros(sat.shape, dtype=np.uint8)
             # channel_count = sat.shape[2]
             channel_count = 1
             ignore_mask_color = (255,) * channel_count
-            cv.fillPoly(mask, roi_corners, ignore_mask_color)
+            cv.fillPoly(mask, roi_corners_for_mask, ignore_mask_color)
+
+            # smooth image
+            x_min, y_min, x_max, y_max = self.sort_points_for_extremes(roi_corners_for_mask)
+            sat[x_min:x_max,y_min:y_max] = cv.medianBlur(sat[x_min:x_max,y_min:y_max], 9)
+            val[x_min:x_max,y_min:y_max] = cv.medianBlur(val[x_min:x_max,y_min:y_max], 9)
+
+            # TODO use ROI here for optimization
+            # black out all area outside roi_corners
             masked_val_img = cv.bitwise_and(val, mask)
-            _, masked_val_img_bin = cv.threshold(masked_val_img, 100, 255, cv.THRESH_BINARY)
             masked_sat_img = cv.bitwise_and(sat, mask)
-            masked_sat_img = cv.bitwise_and(sat, masked_val_img_bin)
-            # cv.imshow('just_focus_' + str(square), masked_sat_img)
-            image__sum = (masked_sat_img > 60).sum()
+
+            # TODO use ROI here for optimization
+            # threshold for high val and high sat
+            _, masked_val_img_bin = cv.threshold(masked_val_img, 40, 255, cv.THRESH_BINARY)
+            _, masked_sat_img_bin = cv.threshold(masked_sat_img, 40, 255, cv.THRESH_BINARY)
+
+            # TODO use ROI here for optimization
+            # combine high val and high sat
+            masked_val_sat_bin = cv.bitwise_and(masked_val_img_bin, masked_sat_img_bin)
+
+            # count high val and high sat pixels
+            image__sum = (masked_val_sat_bin > 60).sum()
             image_sums[square] = (square, image__sum)
-            # print(str(square) + "_" + str(image__sum))
 
-            # TODO draw ar button on checkerboard
+            # keep track of greatest sum roi_corners
+            if (image_sums[square][1] > greatest_sum):
+                greatest_sum = image_sums[square][1]
+                greatest_sum_roi_corners = roi_corners
+
             # place button on square
-            roi_corners = np.array([[third], [second], [first], [fourth]], dtype=np.int32)
-            roi_corners_float = roi_corners.astype(np.float32)
-            img = self.draw_cube.add_image_to_base(img, self.font, roi_corners_float, self.font_point[square][0], self.font_point[square][1][0], self.font_point[square][1][1])
+            img = self.place_button_on_checkerboard(img, self.font, self.font_point[square], roi_corners)
 
+        # sort sums
         image_sums = sorted(image_sums, key=itemgetter(1))
-        is_finger_detected = image_sums[-1][1] > image_sums[-2][1] * 2
-        print(str(is_finger_detected) + " " + str(image_sums[-1][0]))
+        # TODO unhard-code pixels of finger minimum
+        is_finger_detected = image_sums[-1][1] > image_sums[-2][1] * 2 and image_sums[-1][1] > 500
+        square_with_greatest_detection = image_sums[-1][0]
+        print(str(is_finger_detected) + " " + str(square_with_greatest_detection) + " " + str(image_sums[-1][1]))
         if is_finger_detected:
             # highlight_finger(image_sums[-1][0])
-            self.cube_size = image_sums[-1][0] + 1
+            self.cube_size = square_with_greatest_detection + 1
+            img = self.place_button_on_checkerboard(img, self.font_inv, self.font_point[square_with_greatest_detection], greatest_sum_roi_corners)
             return self.cube_size, img
         else:
             return self.cube_size, img
+
+    def sort_points_for_extremes(self, corners2):
+        if corners2.shape[1] == 1:
+            x_min = np.min(corners2[:, 0, 0])
+            y_min = np.min(corners2[:, 0, 1])
+            x_max = np.max(corners2[:, 0, 0])
+            y_max = np.max(corners2[:, 0, 1])
+        else:
+            x_min = np.min(corners2[0, :, 0])
+            y_min = np.min(corners2[0, :, 1])
+            x_max = np.max(corners2[0, :, 0])
+            y_max = np.max(corners2[0, :, 1])
+        return x_min, y_min, x_max, y_max
+
+    def place_button_on_checkerboard(self, img, font_img, font_point_square, roi_corners):
+        roi_corners_float = roi_corners.astype(np.float32)
+        img = self.draw_cube.add_image_to_base(img,
+                                               font_img,
+                                               roi_corners_float,
+                                               font_point_square[0],
+                                               font_point_square[1][0],
+                                               font_point_square[1][1])
+        return img
