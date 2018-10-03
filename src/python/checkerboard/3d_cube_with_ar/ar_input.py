@@ -107,20 +107,10 @@ class ArInput:
             if (image_sums[square][1] > greatest_sum):
                 greatest_sum = image_sums[square][1]
                 greatest_sum_roi_corners = roi_corners
-
-
-            # TODO place finger back on square
-            # mask_inv = cv.bitwise_not(mask)
-            # opposite_mask = cv.bitwise_or(masked_val_sat_bin, mask_inv)
-            opposite_mask = cv.bitwise_not(masked_val_sat_bin)
+                greatest_masked_val_sat_bin = masked_val_sat_bin
 
             # place button on square
-            img = self.place_button_on_checkerboard(img, self.font, self.font_point[square], roi_corners, opposite_mask)
-
-
-            if square == 1:
-                cv.imshow('masked_val_sat_bin', masked_val_sat_bin)
-                cv.imshow('opposite_mask', opposite_mask)
+            img = self.place_button_on_checkerboard(img, self.font, self.font_point[square], roi_corners, mask=masked_val_sat_bin)
 
         # sort sums
         image_sums = sorted(image_sums, key=itemgetter(1))
@@ -131,8 +121,7 @@ class ArInput:
         if is_finger_detected:
             # highlight_finger(image_sums[-1][0])
             self.cube_size = square_with_greatest_detection + 1
-            # TODO fix None here
-            img = self.place_button_on_checkerboard(img, self.font_inv, self.font_point[square_with_greatest_detection], greatest_sum_roi_corners, opposite_mask=None)
+            img = self.place_button_on_checkerboard(img, self.font_inv, self.font_point[square_with_greatest_detection], greatest_sum_roi_corners, mask=greatest_masked_val_sat_bin)
             return self.cube_size, img
         else:
             return self.cube_size, img
@@ -150,7 +139,7 @@ class ArInput:
             y_max = np.max(corners2[0, :, 1])
         return x_min, y_min, x_max, y_max
 
-    def place_button_on_checkerboard(self, img, font_img, font_point_square, roi_corners, opposite_mask):
+    def place_button_on_checkerboard(self, img, font_img, font_point_square, roi_corners, mask):
         roi_corners_float = roi_corners.astype(np.float32)
         img = self.draw_cube.add_image_to_base(img,
                                                font_img,
@@ -158,5 +147,5 @@ class ArInput:
                                                font_point_square[0],
                                                font_point_square[1][0],
                                                font_point_square[1][1],
-                                               opposite_mask=opposite_mask)
+                                               mask=mask)
         return img
