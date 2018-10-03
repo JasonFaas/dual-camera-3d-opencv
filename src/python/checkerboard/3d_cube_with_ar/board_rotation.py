@@ -9,6 +9,8 @@ class BoardRotation:
         self.rotation = (self.rotation + 1) % 4
 
     def get_rotated_corners(self, points):
+        # TODO: do default check to verify that points are in the right place
+
         new_points = points
         if self.rotation == 1:
             new_points = np.empty((49, 1, 2))

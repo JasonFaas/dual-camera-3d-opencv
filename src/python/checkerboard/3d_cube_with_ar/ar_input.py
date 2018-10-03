@@ -11,13 +11,16 @@ class ArInput:
         self.cube_size = 1
         self.resource_path = resource_path
         self.font = cv.imread("3d_cube_with_ar/font/white_rabbit_numbers.jpg")
+        font_six_points = [[16, 20], [80, 80]]
+        blue_tint = np.empty(self.font.shape, dtype=np.uint8)
+        blue_tint[:,:] = (155, 155, 0)
+        self.font[16: 16 + 80, 20: 20 + 80] = cv.subtract(self.font[16: 16 + 80, 20: 20 + 80], blue_tint[16: 16 + 80, 20: 20 + 80])
         self.font_inv = cv.bitwise_not(self.font)
         font_one_points = [[16, 155], [80, 80]]
         font_two_points = [[20, 155+80+50], [80, 80]]
         font_three_points = [[20, 155+(80+50) * 2], [80, 80]]
         font_four_points = [[22, 155+(80+50) * 3 - 5], [80, 80]]
         font_five_points = [[22, 155+(80+50) * 4 - 10], [80, 80]]
-        font_six_points = [[16, 20], [80, 80]]
         self.font_point = np.array([font_one_points,
                                    font_two_points,
                                    font_three_points,
