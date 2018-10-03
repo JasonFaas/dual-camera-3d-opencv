@@ -44,23 +44,23 @@ class DrawCube:
         dev_rows, dev_cols, _ = project_img.shape
         real_src_points = [[0,0],[dev_cols-1,dev_rows-1]]
 
-        img = self.add_image_to_base(img, project_img, real_src_points, destination_points)
+        img = self.add_image_to_base(img, project_img, destination_points, [0,0], dev_cols, dev_rows)
         img = self.draw_cube(img, imgpts3)
         return img
 
-    def add_image_to_base(self, img, project_img, real_src_points, dst_pts):
+    def add_image_to_base(self, img, project_img, dst_pts, src_start_point, src_width, src_height):
         # Put image passed in onto black image
         img_to_use = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
         mask_to_use = np.zeros((img.shape[0], img.shape[1], 1), dtype=np.uint8)
-        img_to_use[real_src_points[0][0]:real_src_points[1][1], real_src_points[0][1]:real_src_points[1][0]] = \
-            project_img[real_src_points[0][0]:real_src_points[1][1], real_src_points[0][1]:real_src_points[1][0]]
+        img_to_use[0:src_width, 0:src_height] = \
+            project_img[src_start_point[0]:src_start_point[0] + src_width, src_start_point[1]:src_start_point[1] + src_height]
 
         # Create matrix to transform then warp
         src_pts = np.array([
-            real_src_points[0],
-            [real_src_points[1][0], real_src_points[0][1]],
-            real_src_points[1],
-            [real_src_points[0][1], real_src_points[1][1]]], dtype="float32")
+            [0,0],
+            [src_width, 0],
+            [src_width, src_height],
+            [0, src_height]], dtype="float32")
 
         matrix = cv.getPerspectiveTransform(src_pts, dst_pts)
         warped_img = cv.warpPerspective(img_to_use, matrix, (img.shape[1], img.shape[0]))

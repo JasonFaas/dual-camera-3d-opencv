@@ -10,9 +10,9 @@ class ArInput:
         self.board_width = board_width
         self.cube_size = 1
         self.resource_path = resource_path
-        font = cv.imread("3d_cube_with_ar/font/white_rabbit_numbers.jpg")
-        font = font[15:15+80,155:155+80]
-        self.font_one = font
+        self.font = cv.imread("3d_cube_with_ar/font/white_rabbit_numbers.jpg")
+        self.font_one_points = [[15, 155], [80, 80]]
+        self.font_two_points = [[18, 155+80+50], [80, 80]]
         self.draw_cube = DrawCube()
 
     def look_for_cube_size_v1(self, img, corners):
@@ -80,8 +80,14 @@ class ArInput:
 
             # TODO draw ar button on checkerboard
             # place button on square
-            # if square == 0:
-            #     draw_cube.
+            if square == 0:
+                roi_corners = np.array([[third], [second], [first], [fourth]], dtype=np.int32)
+                roi_corners_float = roi_corners.astype(np.float32)
+                img = self.draw_cube.add_image_to_base(img, self.font, roi_corners_float, self.font_one_points[0], self.font_one_points[1][0], self.font_one_points[1][1])
+            if square == 1:
+                roi_corners = np.array([[third], [second], [first], [fourth]], dtype=np.int32)
+                roi_corners_float = roi_corners.astype(np.float32)
+                img = self.draw_cube.add_image_to_base(img, self.font, roi_corners_float, self.font_two_points[0], self.font_two_points[1][0], self.font_two_points[1][1])
 
         image_sums = sorted(image_sums, key=itemgetter(1))
         is_finger_detected = image_sums[-1][1] > image_sums[-2][1] * 2
@@ -89,6 +95,6 @@ class ArInput:
         if is_finger_detected:
             # highlight_finger(image_sums[-1][0])
             self.cube_size = image_sums[-1][0] + 1
-            return self.cube_size
+            return self.cube_size, img
         else:
-            return self.cube_size
+            return self.cube_size, img

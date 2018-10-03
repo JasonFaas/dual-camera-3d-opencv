@@ -44,10 +44,7 @@ def analyze_image_and_add_ar(frame_to_analyze):
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
 
-    cube_size = ar_input.look_for_cube_size_v2(img, corners2)
-
-    # TODO put ar button on screen
-    # ar_input.
+    cube_size, img = ar_input.look_for_cube_size_v2(img, corners2)
 
     img = draw_cube.draw_cube_pieces(corners, corners2, img, board_size, cube_size=cube_size)
 
