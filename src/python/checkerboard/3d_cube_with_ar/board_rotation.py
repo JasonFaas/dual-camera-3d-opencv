@@ -3,9 +3,9 @@ from common_core import CommonCore
 
 class BoardRotation:
 
-    def __init__(self, original_rotation):
+    def __init__(self):
         self.last_0th_checkerboard_point = [-1, -1]
-        self.common_core = CommonCore()
+        self.common_core = CommonCore(None)
 
     def update_rotation(self, last_point):
         self.last_0th_checkerboard_point = last_point

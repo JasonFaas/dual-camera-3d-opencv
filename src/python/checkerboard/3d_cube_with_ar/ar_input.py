@@ -7,11 +7,14 @@ from common_core import CommonCore
 
 class ArInput:
 
-    def __init__(self, board_width, resource_path):
+    def __init__(self, board_width, resource_path, start_path):
         self.board_width = board_width
         self.cube_size = 1
+        self.start_path = start_path
         self.resource_path = resource_path
-        self.font = cv.imread("3d_cube_with_ar/font/white_rabbit_numbers.jpg")
+        optional_path = "3d_cube_with_ar/"
+        required_path = "font/white_rabbit_numbers.jpg"
+        self.font = cv.imread("%s%s%s" % (start_path, optional_path, required_path))
         font_six_points = [[16, 20], [80, 80]]
         blue_tint = np.empty(self.font.shape, dtype=np.uint8)
         blue_tint[:,:] = (155, 155, 0)
@@ -28,15 +31,18 @@ class ArInput:
                                    font_four_points,
                                    font_five_points,
                                    font_six_points])
-        self.draw_cube = DrawCube()
-        self.common_core = CommonCore()
+        self.draw_cube = DrawCube(resource_path)
+        self.common_core = CommonCore(None)
+
+    def update_cube_size(self, new_cube_size):
+        self.cube_size = new_cube_size
 
     def look_for_cube_size_v1(self, img, corners):
         cube_return = self.cube_size
         self.cube_size = (self.cube_size % 6) + 1
         return cube_return
 
-    def look_for_cube_size_v2(self, img, corners2):
+    def look_for_cube_size_v2(self, img, corners2, draw_buttons=True):
 
         hue, sat, val = cv.split(cv.cvtColor(img, cv.COLOR_BGR2HSV))
         image_sums = np.zeros((6, 2), dtype=np.int32)
@@ -97,24 +103,31 @@ class ArInput:
                 greatest_masked_val_sat_bin = masked_val_sat_bin
 
             # place button on square
-            img = self.place_button_on_checkerboard(img, self.font, self.font_point[square], roi_corners, mask=masked_val_sat_bin)
+            if draw_buttons:
+                img = self.place_button_on_checkerboard(img, self.font, self.font_point[square], roi_corners, mask=masked_val_sat_bin)
 
         # sort sums
         image_sums = sorted(image_sums, key=itemgetter(1))
         # TODO unhard-code pixels of finger minimum
         is_finger_detected = image_sums[-1][1] > image_sums[-2][1] * 2 and image_sums[-1][1] > 500
         square_with_greatest_detection = image_sums[-1][0]
-        # print(str(is_finger_detected) + " " + str(square_with_greatest_detection) + " " + str(image_sums[-1][1]))
         if is_finger_detected:
-            # only update cube_size if not '6th' location, that is for rotation
             button_pressed = square_with_greatest_detection + 1
-            if button_pressed != 6:
-                self.cube_size = button_pressed
-            img = self.place_button_on_checkerboard(img, self.font_inv, self.font_point[square_with_greatest_detection], greatest_sum_roi_corners, mask=greatest_masked_val_sat_bin)
-            return self.cube_size, img, button_pressed == 6
+            return img, button_pressed, greatest_sum_roi_corners, greatest_masked_val_sat_bin
         else:
-            return self.cube_size, img, False
+            return img, -1, None, None
 
+    def place_inverted_button_on_checkerboard(self,
+                                              img,
+                                              font_square,
+                                              greatest_masked_val_sat_bin,
+                                              greatest_sum_roi_corners):
+        img = self.place_button_on_checkerboard(img,
+                                                self.font_inv,
+                                                self.font_point[font_square],
+                                                greatest_sum_roi_corners,
+                                                mask=greatest_masked_val_sat_bin)
+        return img
 
     def place_button_on_checkerboard(self, img, font_img, font_point_square, roi_corners, mask):
         roi_corners_float = roi_corners.astype(np.float32)
@@ -126,3 +139,6 @@ class ArInput:
                                                font_point_square[1][1],
                                                mask=mask)
         return img
+
+    def get_cube_size(self):
+        return self.cube_size

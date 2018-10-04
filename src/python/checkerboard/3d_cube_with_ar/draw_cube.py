@@ -5,10 +5,9 @@ from common_core import CommonCore
 
 class DrawCube:
 
-    def __init__(self):
-        resources_path = '../../resources/'
+    def __init__(self, resources_path):
         self.bottom_cube_img = cv.imread(resources_path + "to_project/devel_square.jpg")
-        self.common_core = CommonCore()
+        self.common_core = CommonCore(None)
 
     def draw_cube_pieces(self, corners, corners2, img, board_size, cube_size):
         # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
