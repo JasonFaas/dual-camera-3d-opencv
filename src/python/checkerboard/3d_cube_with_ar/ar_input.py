@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 from operator import itemgetter
 from draw_cube import DrawCube
+from common_core import CommonCore
 
 
 class ArInput:
@@ -28,6 +29,7 @@ class ArInput:
                                    font_five_points,
                                    font_six_points])
         self.draw_cube = DrawCube()
+        self.common_core = CommonCore()
 
     def look_for_cube_size_v1(self, img, corners):
         cube_return = self.cube_size
@@ -37,7 +39,7 @@ class ArInput:
     def look_for_cube_size_v2(self, img, corners2):
 
         # TODO put this into a verification
-        x_min, y_min, x_max, y_max = self.sort_points_for_extremes(corners2)
+        x_min, y_min, x_max, y_max = self.common_core.sort_points_for_extremes(corners2)
         # print(smallest_x)
         left_most_point = corners2[self.board_width ** 2 - self.board_width, 0]
         # print(left_most_point)
@@ -81,7 +83,7 @@ class ArInput:
             cv.fillPoly(mask, roi_corners_for_mask, ignore_mask_color)
 
             # smooth image
-            x_min, y_min, x_max, y_max = self.sort_points_for_extremes(roi_corners_for_mask)
+            x_min, y_min, x_max, y_max = self.common_core.sort_points_for_extremes(roi_corners_for_mask)
             sat[y_min:y_max, x_min:x_max] = cv.medianBlur(sat[y_min:y_max, x_min:x_max], 9)
             val[y_min:y_max, x_min:x_max] = cv.medianBlur(val[y_min:y_max, x_min:x_max], 9)
 
@@ -118,7 +120,7 @@ class ArInput:
         # TODO unhard-code pixels of finger minimum
         is_finger_detected = image_sums[-1][1] > image_sums[-2][1] * 2 and image_sums[-1][1] > 500
         square_with_greatest_detection = image_sums[-1][0]
-        print(str(is_finger_detected) + " " + str(square_with_greatest_detection) + " " + str(image_sums[-1][1]))
+        # print(str(is_finger_detected) + " " + str(square_with_greatest_detection) + " " + str(image_sums[-1][1]))
         if is_finger_detected:
             # only update cube_size if not '6th' location, that is for rotation
             button_pressed = square_with_greatest_detection + 1
@@ -129,18 +131,6 @@ class ArInput:
         else:
             return self.cube_size, img, False
 
-    def sort_points_for_extremes(self, corners2):
-        if corners2.shape[1] == 1:
-            x_min = np.min(corners2[:, 0, 0])
-            y_min = np.min(corners2[:, 0, 1])
-            x_max = np.max(corners2[:, 0, 0])
-            y_max = np.max(corners2[:, 0, 1])
-        else:
-            x_min = np.min(corners2[0, :, 0])
-            y_min = np.min(corners2[0, :, 1])
-            x_max = np.max(corners2[0, :, 0])
-            y_max = np.max(corners2[0, :, 1])
-        return x_min, y_min, x_max, y_max
 
     def place_button_on_checkerboard(self, img, font_img, font_point_square, roi_corners, mask):
         roi_corners_float = roi_corners.astype(np.float32)

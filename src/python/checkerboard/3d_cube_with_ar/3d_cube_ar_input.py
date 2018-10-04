@@ -49,7 +49,7 @@ def analyze_image_and_add_ar(frame_to_analyze):
 
     cube_size, img, rotate = ar_input.look_for_cube_size_v2(img, corners2)
     if rotate:
-        board_rotation.update_rotation()
+        board_rotation.update_rotation(corners2[6, 0])
 
     img = draw_cube.draw_cube_pieces(corners, corners2, img, board_size, cube_size=cube_size)
 
