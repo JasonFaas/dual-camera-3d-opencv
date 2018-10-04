@@ -11,8 +11,6 @@ class BoardRotation:
         self.last_0th_checkerboard_point = last_point
 
     def get_rotated_corners(self, points):
-        # TODO: do default check to verify that points are in the right place
-
         rotation = 0
         new_points = points
         x_min, y_min, x_max, y_max = self.common_core.sort_points_for_extremes(new_points)
@@ -25,26 +23,27 @@ class BoardRotation:
             elif self.relative_0th_change(distance_between_checkerboard_extremes, new_points[7 * 6 + 6, 0], self.last_0th_checkerboard_point) < .2:
                 rotation = 2
 
-        # TODO make this more efficient
+        # TODO make these rearranges more efficient
         if rotation == 1:
             new_points = np.empty((49, 1, 2))
             for i in range(7):
                 for k in range(7):
                     new_points[i + (6 - k) * 7] = points[i * 7 + k]
+            # 42, 35, 28, 21, 14, 7, 0, 43, 36
 
         if rotation == 2:
             new_points = np.empty((49, 1, 2))
             for i in range(7):
                 for k in range(7):
                     new_points[(6 - i) * 7 + 6 - k] = points[i * 7 + k]
+            # 48, 47, 46
 
         if rotation == 3:
             new_points = np.empty((49, 1, 2))
             for i in range(7):
                 for k in range(7):
                     new_points[6 + (k * 7) - i] = points[i * 7 + k]
-
-
+            # 6, 13, 20, 27, 34, 41, 48, 5, 12
 
         self.last_0th_checkerboard_point = new_points[0, 0]
 

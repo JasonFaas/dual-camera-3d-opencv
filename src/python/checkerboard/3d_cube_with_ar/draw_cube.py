@@ -1,12 +1,14 @@
 import cv2 as cv
 import numpy as np
 import math
+from common_core import CommonCore
 
 class DrawCube:
 
     def __init__(self):
         resources_path = '../../resources/'
         self.bottom_cube_img = cv.imread(resources_path + "to_project/devel_square.jpg")
+        self.common_core = CommonCore()
 
     def draw_cube_pieces(self, corners, corners2, img, board_size, cube_size):
         # prepare object points, like (0,0,0), (1,0,0), (2,0,0) ....,(6,5,0)
@@ -42,13 +44,13 @@ class DrawCube:
         # Read image to project and put it on image with same size as image to project to
         project_img = self.bottom_cube_img
         dev_rows, dev_cols, _ = project_img.shape
-        real_src_points = [[0,0],[dev_cols-1,dev_rows-1]]
 
         img = self.add_image_to_base(img, project_img, destination_points, [0,0], dev_cols, dev_rows)
         img = self.draw_cube(img, imgpts3)
         return img
 
     def add_image_to_base(self, img, project_img, dst_pts, src_start_point, src_width, src_height, mask=None):
+
         # Put image passed in onto black image
         img_to_use = np.zeros((img.shape[0], img.shape[1], 3), dtype=np.uint8)
         mask_to_use = np.zeros((img.shape[0], img.shape[1], 1), dtype=np.uint8)
@@ -71,17 +73,21 @@ class DrawCube:
         dst_pts_int[3][0][0] = math.ceil(dst_pts[3][0][0])
         dst_pts_int[3][0][1] = math.ceil(dst_pts[3][0][1])
 
+        # Points for roi
+        x_min, y_min, x_max, y_max = self.common_core.sort_points_for_extremes(dst_pts_int)
+
         # create mask with white quadrangle around destination points
         cv.fillConvexPoly(mask_to_use, dst_pts_int, 255)
         mask_to_use_inv = cv.bitwise_not(mask_to_use)
 
-        # TODO use roi for optimization
         if type(mask) != type(None):
-            mask_to_use_inv = cv.bitwise_or(mask, mask_to_use_inv)
+            cv.imshow('mask_to_use_inv', mask_to_use_inv[y_min:y_max, x_min:x_max])
+            mask_to_use_inv[y_min:y_max, x_min:x_max] = cv.bitwise_or(mask[y_min:y_max, x_min:x_max], mask_to_use_inv[y_min:y_max, x_min:x_max])
 
-        img = cv.bitwise_and(img, img, mask=mask_to_use_inv)
-        warped_img = cv.bitwise_and(warped_img, warped_img, mask=cv.bitwise_not(mask_to_use_inv))
-        img = cv.add(img, warped_img)
+        img[y_min:y_max, x_min:x_max] = cv.bitwise_and(img[y_min:y_max, x_min:x_max], img[y_min:y_max, x_min:x_max], mask=mask_to_use_inv[y_min:y_max, x_min:x_max])
+        mask_to_use_inv_inv = cv.bitwise_not(mask_to_use_inv)
+        warped_img[y_min:y_max, x_min:x_max] = cv.bitwise_and(warped_img[y_min:y_max, x_min:x_max], warped_img[y_min:y_max, x_min:x_max], mask=mask_to_use_inv_inv[y_min:y_max, x_min:x_max])
+        img[y_min:y_max, x_min:x_max] = cv.add(img[y_min:y_max, x_min:x_max], warped_img[y_min:y_max, x_min:x_max])
 
         return img
 

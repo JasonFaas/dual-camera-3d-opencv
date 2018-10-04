@@ -38,28 +38,12 @@ class ArInput:
 
     def look_for_cube_size_v2(self, img, corners2):
 
-        # TODO put this into a verification
-        x_min, y_min, x_max, y_max = self.common_core.sort_points_for_extremes(corners2)
-        # print(smallest_x)
-        left_most_point = corners2[self.board_width ** 2 - self.board_width, 0]
-        # print(left_most_point)
-        # print(smallest_y)
-        top_most_point = corners2[0, 0]
-        # print(top_most_point)
-        # print(largest_x)
-        right_most_point = corners2[self.board_width - 1, 0]
-        # print(right_most_point)
-        # print(largest_y)
-        bottom_most_point = corners2[self.board_width ** 2 - 1, 0]
-        # print(bottom_most_point)
-        # print(top_most_point.reshape(2,-1).shape)
-        # cv.line(img, top_most_point.reshape(2,-1), right_most_point.reshape(2,-1), (255, 0, 0), thickness=5)
-
         hue, sat, val = cv.split(cv.cvtColor(img, cv.COLOR_BGR2HSV))
         image_sums = np.zeros((6, 2), dtype=np.int32)
 
         greatest_sum = 0
         greatest_sum_roi_corners = -1
+
         for square in range(6):
             # acquire points from corners to use for ar buttons
             first_bad_format = corners2[self.board_width * square, 0]
@@ -82,24 +66,24 @@ class ArInput:
             ignore_mask_color = (255,) * channel_count
             cv.fillPoly(mask, roi_corners_for_mask, ignore_mask_color)
 
-            # smooth image
             x_min, y_min, x_max, y_max = self.common_core.sort_points_for_extremes(roi_corners_for_mask)
+            # smooth image
             sat[y_min:y_max, x_min:x_max] = cv.medianBlur(sat[y_min:y_max, x_min:x_max], 9)
             val[y_min:y_max, x_min:x_max] = cv.medianBlur(val[y_min:y_max, x_min:x_max], 9)
 
-            # TODO use ROI here for optimization
             # black out all area outside roi_corners
-            masked_val_img = cv.bitwise_and(val, mask)
-            masked_sat_img = cv.bitwise_and(sat, mask)
+            masked_val_img = np.zeros(sat.shape, dtype=np.uint8)
+            masked_sat_img = np.zeros(sat.shape, dtype=np.uint8)
+            masked_val_img[y_min:y_max, x_min:x_max] = cv.bitwise_and(val[y_min:y_max, x_min:x_max], mask[y_min:y_max, x_min:x_max])
+            masked_sat_img[y_min:y_max, x_min:x_max] = cv.bitwise_and(sat[y_min:y_max, x_min:x_max], mask[y_min:y_max, x_min:x_max])
 
-            # TODO use ROI here for optimization
             # threshold for high val and high sat
-            _, masked_val_img_bin = cv.threshold(masked_val_img, 70, 255, cv.THRESH_BINARY)
-            _, masked_sat_img_bin = cv.threshold(masked_sat_img, 40, 255, cv.THRESH_BINARY)
+            _, masked_val_img[y_min:y_max, x_min:x_max] = cv.threshold(masked_val_img[y_min:y_max, x_min:x_max], 70, 255, cv.THRESH_BINARY)
+            _, masked_sat_img[y_min:y_max, x_min:x_max] = cv.threshold(masked_sat_img[y_min:y_max, x_min:x_max], 40, 255, cv.THRESH_BINARY)
 
             # combine high val and high sat
-            masked_val_sat_bin = np.zeros(sat.shape, dtype=np.uint8)
-            masked_val_sat_bin[y_min:y_max, x_min:x_max] = cv.bitwise_and(masked_val_img_bin[y_min:y_max, x_min:x_max], masked_sat_img_bin[y_min:y_max, x_min:x_max])
+            masked_val_sat_bin = masked_val_img
+            masked_val_sat_bin[y_min:y_max, x_min:x_max] = cv.bitwise_and(masked_val_img[y_min:y_max, x_min:x_max], masked_sat_img[y_min:y_max, x_min:x_max])
 
 
             # count high val and high sat pixels
