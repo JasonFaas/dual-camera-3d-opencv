@@ -34,16 +34,19 @@ def analyze_image_and_add_ar(frame_to_analyze):
     img = frame_to_analyze
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
     # Find the chess board corners
-    ret, corners = cv.findChessboardCorners(gray, board_size, None)
+
+    chessboard_corners_img = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 91, 0)
+    ret_1, corners = cv.findChessboardCorners(chessboard_corners_img, board_size, corners=None, flags=cv.CALIB_CB_FAST_CHECK)
+
     # fail program if points not found
-    if not ret:
+    if not ret_1:
         frame_wait_cnt = 10
         print('no checkerboard detected, wait %s frames' % str(frame_wait_cnt))
         cv.imshow('img', img)
         return frame_wait_cnt
 
     criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-    corners2 = cv.cornerSubPix(gray, corners, (11, 11), (-1, -1), criteria)
+    corners2 = cv.cornerSubPix(chessboard_corners_img, corners, (11, 11), (-1, -1), criteria)
 
     corners2 = board_rotation.get_rotated_corners(corners2)
 
@@ -69,6 +72,8 @@ for picture in pictures:
 
 vname = '%s%s%s' % (resources_path, folder_path, video)
 cap = cv.VideoCapture(vname)
+for i in range(250):
+    cap.read()
 while cap.isOpened():
     ret, img_orig = cap.read()
     if not ret:

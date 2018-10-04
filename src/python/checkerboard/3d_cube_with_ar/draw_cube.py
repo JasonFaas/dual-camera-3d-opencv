@@ -81,7 +81,6 @@ class DrawCube:
         mask_to_use_inv = cv.bitwise_not(mask_to_use)
 
         if type(mask) != type(None):
-            cv.imshow('mask_to_use_inv', mask_to_use_inv[y_min:y_max, x_min:x_max])
             mask_to_use_inv[y_min:y_max, x_min:x_max] = cv.bitwise_or(mask[y_min:y_max, x_min:x_max], mask_to_use_inv[y_min:y_max, x_min:x_max])
 
         img[y_min:y_max, x_min:x_max] = cv.bitwise_and(img[y_min:y_max, x_min:x_max], img[y_min:y_max, x_min:x_max], mask=mask_to_use_inv[y_min:y_max, x_min:x_max])
