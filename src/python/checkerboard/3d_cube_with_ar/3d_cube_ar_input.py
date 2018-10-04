@@ -33,10 +33,15 @@ board_rotation = BoardRotation(0)
 def analyze_image_and_add_ar(frame_to_analyze):
     img = frame_to_analyze
     gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    # Find the chess board corners
 
+    # Find the chess board corners
+    # TODO improve this, there are a lot of false-negatives
     chessboard_corners_img = cv.adaptiveThreshold(gray, 255, cv.ADAPTIVE_THRESH_MEAN_C, cv.THRESH_BINARY, 91, 0)
     ret_1, corners = cv.findChessboardCorners(chessboard_corners_img, board_size, corners=None, flags=cv.CALIB_CB_FAST_CHECK)
+    if not ret_1:
+        chessboard_corners_img = gray
+        ret_1, corners = cv.findChessboardCorners(chessboard_corners_img, board_size, corners=None)
+
 
     # fail program if points not found
     if not ret_1:
