@@ -37,7 +37,6 @@ while(True):
             datetime_now = str(datetime.datetime.now()).replace(' ', '_')
             img_name = "opencv_frame_{}_{}.png".format(datetime_now, str(camera))
             cv.imwrite(img_name, frame)
-
         elif key_press == ord(start_recording) and not recording:
             recording = True
             datetime_now = str(datetime.datetime.now()).replace(' ', '_')
